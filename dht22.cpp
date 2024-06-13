@@ -9,12 +9,15 @@ int temperature_retries = 5;
  */
 Dht::Dht() {}
 
+/**
+ * Initialize the DHT22 sensor attached to sensor_pin.
+ */
 void Dht::sensorPin(int sensor_pin) {
   this->setup(sensor_pin, DHTesp::DHT22);
 }
 
-/*
- * Record the current values, since everything works from them.
+/**
+ * Store the current values for future requests.
  * 
  * If non-number comes back, wait 1 second and retry, up to 5 times.
  */
@@ -65,16 +68,4 @@ float Dht::tempF() {
   Serial.print("Dht::tempF, returning");
   Serial.println(result);  
   return result;
-}
-float Dht::heatIndexC() {
-  return this->computeHeatIndex(this->temperature, this->moisture, false);
-}
-
-float Dht::heatIndexF() {
-  return this->cToF(this->heatIndexC());
-}
-
-float Dht::dewpoint() {
-  // Based on https://create.arduino.cc/projecthub/tomwyonkman/dht11-dew-point-calculator-67b487.
-  return (this->tempC() - (100 - this->humidity()) / 5);
 }
