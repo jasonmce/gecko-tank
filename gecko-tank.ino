@@ -1,13 +1,15 @@
 /*
   Gecko tank monitor.
 
-  Monitors one dht22, updates oled temp and humidity display every second.
+  Monitors one dht22 and an LDR (light dependent resistor).
+  Updates oled temp and humidity display every second.
   Posts sensor values to Thingspeak every 5 minutes.
 
   Requirements:
   - NodeMCU V2.0
   - Thingspeak channel
   - dht22 sensor and extension cable to reach from the circuit to inside the terrarium.
+  - LDR (light dependent resistor) and 10K ohm resistor
 
 - NodeMcu Pinout
     D1 <-> DHT22
