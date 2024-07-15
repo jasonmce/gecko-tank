@@ -12,7 +12,8 @@
   - LDR (light dependent resistor) and 10K ohm resistor
 
 - NodeMcu Pinout
-    D1 <-> DHT22
+    D0 <-> DHT22 cool side
+    D1 <-> DHT22 hot side
     D2 <-> oled SDA
     D2 <-> oled SCA
     A0 <-> light circuit
@@ -41,7 +42,8 @@ unsigned long thingspeakCountdown;
 
 // Global variables.
 WiFiClient  client;
-Dht dhtHotside;
+Dht dhtHotSide;
+Dht dhtCoolSide;
 LightSensor light;
 
 /**
@@ -52,7 +54,8 @@ LightSensor light;
 void setup() {
   Serial.begin(115200);
 
-  dhtHotside.sensorPin(D1);
+  dhtCoolSide.sensorPin(D0);
+  dhtHotSide.sensorPin(D1);
   light.sensorPin(A0);
 
   ThingSpeak.begin(client);
@@ -76,35 +79,49 @@ void loop() {
   /* Gather and store all sensor values */
   // Reading temperature or humidity takes about 250 milliseconds!
   // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  dhtHotside.takeMeasurements();
-  float hotside_temp_f = dhtHotside.tempF();
-  float hotside_humid_f = dhtHotside.humidity();
+  dhtCoolSide.takeMeasurements();
+  dhtHotSide.takeMeasurements();
+
+  float CoolSide_temp_f = dhtCoolSide.tempF();
+  float CoolSide_humid_f = dhtCoolSide.humidity();
+
+  float HotSide_temp_f = dhtHotSide.tempF();
+  float HotSide_humid_f = dhtHotSide.humidity();
+
   float rssi = get_rssi();
   int lux = light.percent();
 
   /* Send data to the serial monitor */
   char serial_update[100];
-  sprintf(serial_update,"Hotside=%0.1ff %0.1f%% lux=%d rssi=%0.1f", 
-    hotside_temp_f,
-    hotside_humid_f,
+  sprintf(serial_update,"HotSide=%0.1ff %0.1f%% CoolSide=%0.1ff %0.1f%% lux=%d rssi=%0.1f", 
+    HotSide_temp_f,
+    HotSide_humid_f,
+    CoolSide_temp_f,
+    CoolSide_humid_f,
     lux,
     rssi
   );         
   Serial.println(serial_update);
 
   /* Send data to the oled */
-  char temp_text[100];
-  sprintf(temp_text, "%0.1ff %0.1f%%", hotside_temp_f, hotside_humid_f);
+  char hot_text[100];
+  sprintf(hot_text, "H %0.1ff %0.1f%%", HotSide_temp_f, HotSide_humid_f);
+
+  char cool_text[100];
+  sprintf(cool_text, "C %0.1ff %0.1f%%", CoolSide_temp_f, CoolSide_humid_f);
+
   char title[100];
   sprintf(title, "lux %d", lux);
-  drawText(title, temp_text);
+  drawText(title, hot_text, cool_text);
 
   // Send data to Thingspeak for storage when it is time.
   if (0 == thingspeakCountdown--) {
-    ThingSpeak.setField(1, hotside_temp_f); 
-    ThingSpeak.setField(2, hotside_humid_f); 
-    ThingSpeak.setField(3, lux); 
-    ThingSpeak.setField(4, rssi); 
+    ThingSpeak.setField(1, HotSide_temp_f); 
+    ThingSpeak.setField(2, HotSide_humid_f); 
+    ThingSpeak.setField(3, CoolSide_temp_f); 
+    ThingSpeak.setField(4, CoolSide_humid_f); 
+    ThingSpeak.setField(5, lux); 
+    ThingSpeak.setField(6, rssi); 
     drawText("Transmitting...", "");
     thingspeakPostData();
 
